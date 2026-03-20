@@ -12,47 +12,7 @@ This repository implements a system that captures waste in real time. Servers th
 
 Everything is Terraform. Every change goes through a security and cost pipeline before it touches infrastructure. Nothing changes in production without a human approving it first.
 
----
 
-## Architecture
-
-> See `architecture.drawio` — import directly into [draw.io](https://draw.io) for the full interactive diagram with all AWS service icons.
-
-**Four layers:**
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│  CI/CD & Developer Layer                                            │
-│                                                                     │
-│  GitHub PR → tfsec → Checkov → Semgrep → OPA → Infracost           │
-│           → AI IaC review (Claude API → PR comment)                │
-│  Environments: dev.tfvars · staging.tfvars · prod.tfvars            │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │ terraform apply
-┌───────────────────────────▼─────────────────────────────────────────┐
-│  AWS Services                                                       │
-│                                                                     │
-│  Cost Explorer · CloudWatch · Compute Optimizer · Tagging API       │
-│  EventBridge Scheduler · S3 Lifecycle · AWS Budgets · Config        │
-│  SCPs · Cost Anomaly Detection · Security Hub · CloudTrail          │
-│  Lambda (EBS cleanup · rightsizing · remediation) · Forecast        │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │ SNS anomaly alert / Monday cron
-┌───────────────────────────▼─────────────────────────────────────────┐
-│  n8n Orchestration (self-hosted — data stays in VPC)                │
-│                                                                     │
-│  Flow 1 (event): SNS → fetch CW + GitHub + Tags → Claude → Slack   │
-│  Flow 2 (weekly): Cost Explorer + Optimizer → Claude → Slack + PDF │
-│  Validation: sense check → 2-engineer approval → 48h staging       │
-└───────────────────────────┬─────────────────────────────────────────┘
-                            │ alerts / reports / PRs
-┌───────────────────────────▼─────────────────────────────────────────┐
-│  Outputs                                                            │
-│  Slack · Jira · GitHub PRs · QuickSight · Leadership PDF · Pager   │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
----
 
 ## Repository structure
 
