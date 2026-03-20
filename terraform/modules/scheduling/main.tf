@@ -54,7 +54,6 @@ resource "aws_scheduler_schedule" "stop" {
   count      = var.enabled ? 1 : 0
   name       = "${var.name_prefix}-stop"
   group_name = aws_scheduler_schedule_group.cost[0].name
-  tags       = var.tags
 
   flexible_time_window { mode = "OFF" }
   schedule_expression          = var.stop_cron
@@ -73,7 +72,6 @@ resource "aws_scheduler_schedule" "start" {
   count      = var.enabled ? 1 : 0
   name       = "${var.name_prefix}-start"
   group_name = aws_scheduler_schedule_group.cost[0].name
-  tags       = var.tags
 
   flexible_time_window { mode = "OFF" }
   schedule_expression          = var.start_cron
