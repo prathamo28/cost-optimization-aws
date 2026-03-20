@@ -6,9 +6,9 @@
 
 ## The problem this solves
 
-Cloud costs go up quietly. Nobody notices until the bill arrives. By then, it is too late — the waste has already happened, and nobody can easily explain what caused it.
+Cloud costs go up quietly. Nobody notices until the bill arrives. By then, it is too late,  the waste has already happened, and nobody can easily explain what caused it.
 
-This repository implements a system that captures waste in real time. Servers that should not run overnight are automatically turned off. Servers that are too big for what they are doing get flagged and resized. Old files that have not been touched in months get moved to cheaper storage. And when something unexpected happens — a sudden spike in spend — an AI workflow investigates it automatically and posts an explanation to Slack in under two minutes.
+This repository implements a system that captures waste in real time. Servers that should not run overnight are automatically turned off. Servers that are too big for what they are doing get flagged and resized. Old files that have not been touched in months get moved to cheaper storage. And when something unexpected happens,  a sudden spike in spend,  an AI workflow investigates it automatically and posts an explanation to Slack in under two minutes.
 
 Everything is Terraform. Every change goes through a security and cost pipeline before it touches infrastructure. Nothing changes in production without a human approving it first.
 
@@ -59,7 +59,7 @@ cost-optimization-aws/
 │       └── weekly_digest.json       ← Import directly into n8n
 │
 ├── policies/
-│   ├── cost.rego                    ← OPA: 7 rules on terraform plan
+│   ├── cost.rego                    ← OPA: 7 rules on Terraform plan
 │   └── .semgrep/
 │       └── cost-rules.yml           ← Custom rules: oversized instances, missing tags, secrets
 │
