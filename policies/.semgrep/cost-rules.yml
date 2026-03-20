@@ -1,0 +1,126 @@
+rules:
+
+  # ── Oversized instance types in Terraform ──────────────────────────────
+  - id: terraform-oversized-instance
+    patterns:
+      - pattern: |
+          resource "aws_instance" "$NAME" {
+            ...
+            instance_type = "$TYPE"
+            ...
+          }
+      - metavariable-regex:
+          metavariable: $TYPE
+          regex: "(m5\\.2xlarge|m5\\.4xlarge|r5\\.2xlarge|r5\\.4xlarge|p3|p4)"
+    message: >
+      Instance type $TYPE may be oversized. Verify actual CPU and memory
+      utilisation before provisioning. Consider t3.medium or m5.large
+      for dev and staging workloads.
+    languages: [hcl]
+    severity: WARNING
+    metadata:
+      category: cost
+      technology: terraform
+      rule-id: COST-S001
+
+  # ── S3 bucket without encryption companion resource ────────────────────
+  - id: terraform-s3-no-encryption
+    pattern: |
+      resource "aws_s3_bucket" "$NAME" {
+        ...
+      }
+    pattern-not-inside: |
+      resource "aws_s3_bucket_server_side_encryption_configuration" "$NAME" {
+        ...
+      }
+    message: >
+      S3 bucket $NAME has no encryption configuration.
+      Add aws_s3_bucket_server_side_encryption_configuration. (CKV_AWS_19)
+    languages: [hcl]
+    severity: ERROR
+    metadata:
+      category: security
+      technology: terraform
+      rule-id: SEC-S001
+
+  # ── IAM wildcard actions ───────────────────────────────────────────────
+  - id: terraform-iam-wildcard-action
+    pattern: |
+      statement {
+        ...
+        actions = ["*"]
+        ...
+      }
+    message: >
+      Wildcard IAM action detected. Specify the minimum required actions.
+      Violates least-privilege principle. (CKV_AWS_40)
+    languages: [hcl]
+    severity: ERROR
+    metadata:
+      category: security
+      technology: terraform
+      rule-id: SEC-S002
+
+  # ── Missing mandatory cost tags ────────────────────────────────────────
+  - id: terraform-missing-cost-team-tag
+    patterns:
+      - pattern: |
+          resource "$RESOURCE_TYPE" "$NAME" {
+            ...
+            tags = { ... }
+            ...
+          }
+      - pattern-not: |
+          resource "$RESOURCE_TYPE" "$NAME" {
+            ...
+            tags = { ..., "cost:team" = ..., ... }
+            ...
+          }
+    message: >
+      Resource $RESOURCE_TYPE/$NAME is missing the cost:team tag.
+      All resources must include cost:team, cost:env, and cost:managed.
+    languages: [hcl]
+    severity: WARNING
+    metadata:
+      category: cost
+      technology: terraform
+      rule-id: COST-S002
+
+  # ── RDS Multi-AZ in non-prod ───────────────────────────────────────────
+  - id: terraform-rds-multiz-nonprod
+    pattern: |
+      resource "aws_db_instance" "$NAME" {
+        ...
+        multi_az = true
+        ...
+      }
+    message: >
+      RDS Multi-AZ detected. Ensure this is intentional — Multi-AZ in
+      dev or staging wastes $200+/month. Use multi_az = false in non-prod.
+    languages: [hcl]
+    severity: WARNING
+    metadata:
+      category: cost
+      technology: terraform
+      rule-id: COST-S003
+
+  # ── Hardcoded secrets in Terraform ────────────────────────────────────
+  - id: terraform-hardcoded-secret
+    patterns:
+      - pattern: |
+          "$KEY" = "$VALUE"
+      - metavariable-regex:
+          metavariable: $KEY
+          regex: "(password|secret|api_key|token|private_key)"
+      - metavariable-regex:
+          metavariable: $VALUE
+          regex: "^(?!var\\.)(?!data\\.)(?!local\\.).{8,}"
+    message: >
+      Possible hardcoded secret in key '$KEY'. Use SSM Parameter Store
+      or Secrets Manager and reference via data source.
+    languages: [hcl]
+    severity: ERROR
+    metadata:
+      category: security
+      technology: terraform
+      rule-id: SEC-S003

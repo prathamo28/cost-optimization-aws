@@ -1,0 +1,77 @@
+name: Security scan
+
+on:
+  pull_request:
+    paths:
+      - "terraform/**"
+      - "policies/**"
+      - "scripts/**"
+
+jobs:
+  tfsec:
+    name: tfsec — security static analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: terraform
+          format: sarif
+          soft_fail: false
+          additional_args: --minimum-severity HIGH
+
+      - name: Upload tfsec SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: tfsec.sarif
+          category: tfsec
+
+  checkov:
+    name: Checkov — misconfiguration scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: terraform
+          framework: terraform
+          output_format: sarif
+          output_file_path: checkov.sarif
+          soft_fail: false
+          skip_check: CKV_AWS_18,CKV_AWS_144
+
+      - name: Upload Checkov SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: checkov.sarif
+          category: checkov
+
+  semgrep:
+    name: Semgrep — code quality and custom rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >
+            p/terraform
+            p/secrets
+            policies/.semgrep/cost-rules.yml
+          generateSarif: "1"
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: Upload Semgrep SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
